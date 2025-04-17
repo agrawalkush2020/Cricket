@@ -1,0 +1,13 @@
+export const SET_MOVIES_LIST = "SET_MOVIES_LIST";
+export const RESET_MOVIES_LIST = "RESET_MOVIES_LIST";
+
+export const SET_SHOWS_LIST = "SET_SHOWS_LIST";
+export const RESET_SHOWS_LIST = "RESET_SHOWS_LIST";
+
+
+
+// for the admin
+export const SET_BOOKED_SHOWS = "SET_BOOKED_SHOWS";
+export const RESET_BOOKED_SHOWS = "RESET_BOOKED_SHOWS";
+
+
