@@ -1,10 +1,10 @@
-import { Router, Request, Response } from "express";
+import { Router, Request, Response, RequestHandler } from "express";
 import { Delivery } from "../db/schema";
 import { processDelivery, getInningDetails } from "../utils/delivery";
 
 const router = Router();
 
-router.post("/", async (req: Request, res: Response) => {
+router.post("/", (async (req: Request, res: Response) => {
   try {
     const delivery = new Delivery(req.body);
     await delivery.save();
@@ -17,6 +17,6 @@ router.post("/", async (req: Request, res: Response) => {
   } catch (err) {
     res.status(500).json({ error: "Failed to record delivery" });
   }
-});
+}) as RequestHandler);
 
 export default router;
