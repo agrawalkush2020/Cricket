@@ -7,18 +7,31 @@ const router = Router();
 router.get("/", (async (_req: Request, res: Response) => {
   try {
     const innings = await Inning.find().sort({ createdAt: 1 });
-    if (!innings || innings.length === 0) {
+
+    if (innings.length === 0) {
       return res.status(404).json({ error: "No innings found" });
     }
 
     const currentInning = innings[innings.length - 1];
-    const previousInning = innings.length > 1 ? innings[innings.length - 2] : null;
+    const firstInning = innings[0];
 
+    // Get full details for current inning
     const currentInningData = await getInningDetails(currentInning._id);
+
+    // Prepare summary for first inning
+    const overs =
+      Math.floor(firstInning.totalBalls / 6) +
+      (firstInning.totalBalls % 6) / 10;
+
+    const firstInningSummary = {
+      totalScore: firstInning.totalRuns,
+      totalWickets: firstInning.totalWickets,
+      totalOvers: overs.toFixed(1),
+    };
 
     return res.status(200).json({
       currentInning: currentInningData,
-      firstInningTotal: previousInning ? previousInning.totalRuns : null
+      firstInningSummary
     });
 
   } catch (err) {
