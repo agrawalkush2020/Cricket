@@ -2,6 +2,7 @@ import express from 'express';
 import mongoose from "mongoose";
 import cors from 'cors';
 import deliveryRouter from './routes/delivery';
+import inningRouter from './routes/inning';
 const app = express();
 const PORT = 5000;
 mongoose
@@ -22,6 +23,7 @@ app.get('/', (_req, res) => {
 });
 
 app.use("/delivery", deliveryRouter);
+app.use("/inning-details", inningRouter);
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
