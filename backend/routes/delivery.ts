@@ -7,6 +7,7 @@ const router = Router();
 router.post("/", (async (req: Request, res: Response) => {
   try {
     const delivery = new Delivery(req.body);
+    console.log(delivery);
     await delivery.save();
 
     // Update inning + player stats
