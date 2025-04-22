@@ -33,3 +33,10 @@ const makeTheCall = async (url, body = null, method = "GET", token = true) => {
 };
 
 export default makeTheCall;
+
+import axios from "axios";
+
+export const api = axios.create({
+  baseURL: "http://localhost:5000", // your backend
+});
+
