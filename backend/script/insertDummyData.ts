@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { Team, Player, Inning, Delivery, ScoreCard } from "../db/schema.js";
+import { Team, Player, Inning, Delivery, ScoreCard } from "../db/schema";
 
 const MONGODB_URI = "mongodb+srv://agrawalkush2020:1N8SL2gWRrlfhAny@cluster0.8hx4y0s.mongodb.net/";
 const runSeed = async () => {
