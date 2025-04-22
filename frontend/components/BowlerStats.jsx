@@ -1,23 +1,26 @@
 'use client';
 
-export default function BowlerStats({ bowlers }) {
+export default function BatsmanStats({ batsmen }) {
+  if (!Array.isArray(batsmen)) return <div>No batsman data available</div>;
+
   return (
     <div>
-      <h2 className="text-xl font-bold mb-2">Bowlers</h2>
+      <h2 className="text-xl font-bold mb-2">Batsmen</h2>
       <table className="w-full border">
         <thead>
           <tr>
-            <th>Name</th><th>Overs</th><th>Runs</th><th>Wickets</th><th>Eco</th>
+            <th>Name</th><th>R</th><th>B</th><th>4s</th><th>6s</th><th>SR</th>
           </tr>
         </thead>
         <tbody>
-          {bowlers.map((b) => (
+          {batsmen.map((b) => (
             <tr key={b.name}>
               <td>{b.name}</td>
-              <td>{b.overs}</td>
               <td>{b.runs}</td>
-              <td>{b.wickets}</td>
-              <td>{b.economy}</td>
+              <td>{b.ballsFaced}</td>
+              <td>{b.fours}</td>
+              <td>{b.sixes}</td>
+              <td>{b.strikeRate}</td>
             </tr>
           ))}
         </tbody>

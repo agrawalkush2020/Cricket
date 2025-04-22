@@ -1,6 +1,8 @@
 'use client';
 
 export default function BatsmanStats({ batsmen }) {
+  if (!Array.isArray(batsmen)) return <div>No batsman data available</div>;
+
   return (
     <div>
       <h2 className="text-xl font-bold mb-2">Batsmen</h2>
