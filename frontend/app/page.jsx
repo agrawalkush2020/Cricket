@@ -1,6 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { api } from '../utils/api';
+import DeliveryForm from '../components/delivery';
+import BatsmanPerformance from '../components/BatsmanStats';
 
 export default function Page() {
   const [inning, setInning] = useState(null);
@@ -35,14 +37,6 @@ export default function Page() {
     fetchInnings();
   }, []);
 
-  // debugger
-  // console.log(inning, firstInning);
-//   firstInning = {
-//     "totalScore": 120,
-//     "totalWickets": 5,
-//     "totalOvers": "20.0"
-// }
-
   if(!firstInning) {
     return (
       <div>
@@ -50,52 +44,50 @@ export default function Page() {
       </div>
     )
   }
-
-  const sectionStyle = {
-    margin: '20px 0',
-    padding: '20px',
+  const boxStyle = {
+    border: '1px solid #ccc',
     borderRadius: '8px',
+    padding: '12px 16px',
+    margin: '10px',
     backgroundColor: '#f9f9f9',
-    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+    fontFamily: 'sans-serif',
+    width: 'fit-content',
+    textAlign: 'center',
   };
   
-  const headerStyle = {
-    fontSize: '20px',
-    fontWeight: 'bold',
-    marginBottom: '10px',
-    color: '#333',
-  };
-  
-  const paragraphStyle = {
-    margin: '5px 0',
+  const titleStyle = {
     fontSize: '16px',
-    color: '#555',
+    fontWeight: 'bold',
+    marginBottom: '8px',
   };
   
-  const containerStyle = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    flexDirection: 'column',
+  const scoreStyle = {
+    fontSize: '18px',
+    color: '#333',
   };
 
   return (
-    <div style={containerStyle}>
-      <div style={sectionStyle}>
-        <h3 style={headerStyle}>First Inning</h3>
-        <p style={paragraphStyle}><strong>Total Score:</strong> {firstInning.totalScore}</p>
-        <p style={paragraphStyle}><strong>Total Wickets:</strong> {firstInning.totalWickets}</p>
-        <p style={paragraphStyle}><strong>Total Overs:</strong> {firstInning.totalOvers}</p>
+    <div >
+        <div style={{ display: 'flex', gap: '20px', justifyContent: 'center' }}>
+        <div style={boxStyle}>
+          <div style={titleStyle}>First Inning</div>
+          <div style={scoreStyle}>
+            {firstInning.totalScore}/{firstInning.totalWickets} in {firstInning.totalOvers} overs
+          </div>
+        </div>
+
+        <div style={boxStyle}>
+          <div style={titleStyle}>Current Inning</div>
+          <div style={scoreStyle}>
+            {inning.totalScore}/{inning.totalWickets} in {inning.totalOvers} overs
+          </div>
+        </div>
       </div>
 
-      <div style={sectionStyle}>
-        <h3 style={headerStyle}>Current Inning</h3>
-        <p style={paragraphStyle}><strong>Total Score:</strong> {inning.totalScore}</p>
-        <p style={paragraphStyle}><strong>Total Wickets:</strong> {inning.totalWickets}</p>
-        <p style={paragraphStyle}><strong>Total Overs:</strong> {inning.totalOvers}</p>
-      </div>
+      <BatsmanPerformance batsmen={inning?.deliveries} />
 
-      <div style={sectionStyle}>
-        <h3 style={headerStyle}>Select Players</h3>
+      <div>
+        <h3>Select Players</h3>
         
         <div style={{marginBottom: '15px'}}>
           <label style={{display: 'block', marginBottom: '5px', color: '#444'}}>
@@ -134,6 +126,13 @@ export default function Page() {
             ))}
           </select>
         </div>
+
+        <DeliveryForm
+          inningId={inning._id}
+          batsmanId={battingTeam.players[0]._id}
+          bowlerId={bowlingTeam.players[0]._id}
+        />
+
 
       </div>
       
