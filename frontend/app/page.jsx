@@ -1,9 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { api } from '../utils/api';
-import ScoreControls from '../components/ScoreControls';
-import BatsmanStats from '../components/BatsmanStats';
-import BowlerStats from '../components/BowlerStats';
 
 export default function Page() {
   const [inning, setInning] = useState(null);
@@ -13,12 +10,9 @@ export default function Page() {
     const resCurrent = await api.get('/inning-details', {
       params: { id: 'current-inning-id' },
     });
-    setInning(resCurrent.data);
 
-    const resFirst = await api.get('/inning-details', {
-      params: { id: 'first-inning-id' },
-    });
-    setFirstInning(resFirst.data);
+    setInning(resCurrent.data.currentInning);
+    setFirstInning(resCurrent.data.firstInningSummary);
   };
 
   const handleSubmit = async (deliveryData) => {
@@ -35,56 +29,66 @@ export default function Page() {
     fetchInnings();
   }, []);
 
+  // debugger
+  console.log(inning, firstInning);
+//   firstInning = {
+//     "totalScore": 120,
+//     "totalWickets": 5,
+//     "totalOvers": "20.0"
+// }
+
+  if(!firstInning) {
+    return (
+      <div>
+        <h1>No first inning data</h1>
+      </div>
+    )
+  }
+
+  const sectionStyle = {
+    margin: '20px 0',
+    padding: '20px',
+    borderRadius: '8px',
+    backgroundColor: '#f9f9f9',
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+  };
+  
+  const headerStyle = {
+    fontSize: '20px',
+    fontWeight: 'bold',
+    marginBottom: '10px',
+    color: '#333',
+  };
+  
+  const paragraphStyle = {
+    margin: '5px 0',
+    fontSize: '16px',
+    color: '#555',
+  };
+  
+  const containerStyle = {
+    display: 'flex',
+    justifyContent: 'space-between',
+    flexDirection: 'column',
+  };
+
   return (
-    <main className="p-6 space-y-4">
-      <h1 className="text-2xl font-bold">Cricket Admin Panel</h1>
+    <div style={containerStyle}>
+      <div style={sectionStyle}>
+        <h3 style={headerStyle}>First Inning</h3>
+        <p style={paragraphStyle}><strong>Total Score:</strong> {firstInning.totalScore}</p>
+        <p style={paragraphStyle}><strong>Total Wickets:</strong> {firstInning.totalWickets}</p>
+        <p style={paragraphStyle}><strong>Total Overs:</strong> {firstInning.totalOvers}</p>
+      </div>
 
-      {/* First Inning */}
-      {firstInning && (
-        <div className="border-b py-4">
-          <h2 className="text-xl font-semibold">First Inning Summary</h2>
-          <div>
-            <p>
-              Total Score: {firstInning.firstInningSummary.totalScore} /{' '}
-              {firstInning.firstInningSummary.totalWickets} | Overs:{' '}
-              {firstInning.firstInningSummary.totalOvers}
-            </p>
-          </div>
-        </div>
-      )}
+      <div style={sectionStyle}>
+        <h3 style={headerStyle}>Current Inning</h3>
+        <p style={paragraphStyle}><strong>Total Score:</strong> {inning.totalScore}</p>
+        <p style={paragraphStyle}><strong>Total Wickets:</strong> {inning.totalWickets}</p>
+        <p style={paragraphStyle}><strong>Total Overs:</strong> {inning.totalOvers}</p>
+      </div>
+    </div>
+  )
 
-      {/* Current Inning */}
-      {inning && (
-        <div className="py-4">
-          <h2 className="text-xl font-semibold">Current Inning</h2>
-          <div>
-            <p>
-              Total Score: {inning.currentInning.totalScore} /{' '}
-              {inning.currentInning.totalWickets} | Overs: {inning.currentInning.totalOvers} | Run Rate:{' '}
-              {inning.currentInning.runRate}
-            </p>
-            <div className="space-y-2">
-              <h3 className="text-lg font-semibold">Extras</h3>
-              <p>
-                Wide: {inning.currentInning.extras.wide} | No Ball:{' '}
-                {inning.currentInning.extras.noBall} | Bye:{' '}
-                {inning.currentInning.extras.bye} | Leg Bye:{' '}
-                {inning.currentInning.extras.legBye}
-              </p>
-            </div>
-          </div>
-
-          {/* Batsman Stats */}
-          <BatsmanStats batsmen={inning.currentInning.batsmen} />
-
-          {/* Bowler Stats */}
-          <BowlerStats bowlers={inning.currentInning.bowlers} />
-
-          {/* Score Controls */}
-          <ScoreControls onSubmit={handleSubmit} />
-        </div>
-      )}
-    </main>
-  );
+   
 }
-
