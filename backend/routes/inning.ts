@@ -1,6 +1,12 @@
 import { Router, Request, Response, RequestHandler } from 'express';
-import { Inning } from '../db/schema';
+import { Inning, Team } from '../db/schema';
 import { getInningDetails } from '../utils/delivery';
+import mongoose from 'mongoose';
+
+interface PopulatedInning extends mongoose.Document {
+  battingTeam: mongoose.Types.ObjectId;
+  bowlingTeam: mongoose.Types.ObjectId;
+}
 
 const router = Router();
 
@@ -29,9 +35,16 @@ router.get("/", (async (_req: Request, res: Response) => {
       totalOvers: overs.toFixed(1),
     };
 
+    // Populate teams before accessing them
+    const populatedCurrentInning = await currentInning.populate('battingTeam bowlingTeam') as PopulatedInning;
+    const battingTeam = await Team.findById(populatedCurrentInning.battingTeam).populate('players');
+    const bowlingTeam = await Team.findById(populatedCurrentInning.bowlingTeam).populate('players');
+
     return res.status(200).json({
       currentInning: currentInningData,
-      firstInningSummary
+      firstInningSummary,
+      battingTeam,
+      bowlingTeam
     });
 
   } catch (err) {
