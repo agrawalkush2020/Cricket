@@ -16,7 +16,7 @@ router.get("/", (async (_req: Request, res: Response) => {
     const firstInning = innings[0];
 
     // Get full details for current inning
-    const currentInningData = await getInningDetails(currentInning._id);
+    const currentInningData = await getInningDetails(currentInning._id.toString());
 
     // Prepare summary for first inning
     const overs =

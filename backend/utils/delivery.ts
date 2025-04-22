@@ -1,6 +1,22 @@
 import { Inning, ScoreCard, Team, Player, Delivery } from "../db/schema";
 import mongoose from "mongoose";
 
+interface PopulatedDelivery extends mongoose.Document {
+  batsman: any;
+  bowler: any;
+  runs: number;
+  deliveryType: string;
+  isLegalBall: boolean;
+  isWicket: boolean;
+}
+
+interface PopulatedInning extends mongoose.Document {
+  deliveries: PopulatedDelivery[];
+  totalRuns: number;
+  totalWickets: number;
+  totalBalls: number;
+}
+
 export const processDelivery = async (delivery: any) => {
   const {
     inning: inningId,
@@ -126,91 +142,89 @@ export const processDelivery = async (delivery: any) => {
   await inning.save();
 };
 
-export const getInningDetails = async (inningId: any) => {
+export const getInningDetails = async (inningId: string) => {
+  try {
     const inning = await Inning.findById(inningId)
-        .populate<{ battingTeam: { name: string, players: mongoose.Types.ObjectId[] } }>('battingTeam')
-        .populate<{ bowlingTeam: { name: string, players: mongoose.Types.ObjectId[] } }>('bowlingTeam')
-        .populate<{ deliveries: { batsman: mongoose.Types.ObjectId, bowler: mongoose.Types.ObjectId }[] }>('deliveries');
+      .populate({
+        path: 'deliveries',
+        populate: [
+          { path: 'batsman', model: Player },
+          { path: 'bowler', model: Player }
+        ]
+      })
+      .exec() as unknown as PopulatedInning;
 
-    if (!inning) throw new Error("Inning not found");
-    if (!inning.battingTeam) throw new Error("Batting team not found");
-    if (!inning.bowlingTeam) throw new Error("Bowling team not found");
-    if (!inning.deliveries) throw new Error("Deliveries not found");
+    if (!inning) {
+      throw new Error('Inning not found');
+    }
 
-    // Get all scorecards for this inning
-    const scoreCards = await ScoreCard.find({
-        player: { 
-            $in: [...inning.battingTeam.players, ...inning.bowlingTeam.players]
-        }
-    }).populate<{ player: { _id: mongoose.Types.ObjectId, name: string } }>('player');
+    const totalScore = inning.totalRuns;
+    const totalWickets = inning.totalWickets;
+    const totalOvers = Math.floor(inning.totalBalls / 6) + (inning.totalBalls % 6) / 10;
+    const runRate = (inning.totalBalls > 0) ? (inning.totalRuns / (inning.totalBalls / 6)).toFixed(2) : "0.00";
+    
+    const striker = inning.deliveries.length > 0 ? inning.deliveries[inning.deliveries.length - 1].batsman : null;
+    const nonStriker = inning.deliveries.length > 1 ? inning.deliveries[inning.deliveries.length - 2].batsman : null;
 
-    // Get batsmen details
-    const batsmenCards = scoreCards.filter(card => !card.isBowler);
-    const bowlerCards = scoreCards.filter(card => card.isBowler);
+    // Calculate striker and non-striker statistics
+    const strikerData = striker ? {
+      runs: striker.runs || 0,
+      ballsFaced: striker.ballsFaced || 0,
+      fours: striker.fours || 0,
+      sixes: striker.sixes || 0,
+      strikeRate: (striker.ballsFaced > 0) ? ((striker.runs / striker.ballsFaced) * 100).toFixed(2) : "0.00",
+    } : null;
 
-    // Get current batsmen (last two unique batsmen from deliveries)
-    const uniqueBatsmen = [...new Set(inning.deliveries
-        .map(d => d.batsman.toString())
-        .reverse()
-    )].slice(0, 2);
+    const nonStrikerData = nonStriker ? {
+      runs: nonStriker.runs || 0,
+      ballsFaced: nonStriker.ballsFaced || 0,
+      fours: nonStriker.fours || 0,
+      sixes: nonStriker.sixes || 0,
+      strikeRate: (nonStriker.ballsFaced > 0) ? ((nonStriker.runs / nonStriker.ballsFaced) * 100).toFixed(2) : "0.00",
+    } : null;
 
-    const [striker, nonStriker] = uniqueBatsmen.map(batsmanId => {
-        const card = batsmenCards.find(c => c.player._id.toString() === batsmanId);
-        return {
-            name: card?.player.name,
-            runs: card?.runs || 0,
-            ballsFaced: card?.ballsFaced || 0,
-            fours: card?.fours || 0,
-            sixes: card?.sixes || 0,
-            strikeRate: card ? ((card.runs / card.ballsFaced) * 100).toFixed(2) : "0.00"
-        };
-    });
+    // Get bowler statistics
+    const bowlers = inning.deliveries.reduce((acc: any[], delivery) => {
+      const bowler = delivery.bowler;
+      const existingBowler = acc.find((b: any) => b.bowler._id.toString() === bowler._id.toString());
 
-    // Get current bowler (last bowler from deliveries)
-    const currentBowlerId = inning.deliveries[inning.deliveries.length - 1]?.bowler;
-    const currentBowlerCard = bowlerCards.find(c => 
-        c.player._id.toString() === currentBowlerId?.toString()
-    );
+      if (existingBowler) {
+        existingBowler.oversBowled += 1 / 6;
+        existingBowler.runsConceded += delivery.runs;
+        if (delivery.isWicket) existingBowler.wicketsTaken += 1;
+      } else {
+        acc.push({
+          bowler: bowler,
+          oversBowled: 1 / 6,
+          runsConceded: delivery.runs,
+          wicketsTaken: delivery.isWicket ? 1 : 0
+        });
+      }
+
+      return acc;
+    }, []);
 
     return {
-        totalScore: inning.totalRuns,
-        totalWickets: inning.totalWickets,
-        totalOvers: Math.floor(inning.totalBalls / 6) + (inning.totalBalls % 6) / 10,
-        runRate: ((inning.totalRuns / inning.totalBalls) * 6).toFixed(2),
-        extras: inning.extras,
-        
-        striker,
-        nonStriker,
-        
-        currentBowler: currentBowlerCard ? {
-            name: currentBowlerCard.player.name,
-            overs: currentBowlerCard.oversBowled.toFixed(1),
-            maidens: currentBowlerCard.maidens,
-            runs: currentBowlerCard.runsConceded,
-            wickets: currentBowlerCard.wicketsTaken,
-            economy: ((currentBowlerCard.runsConceded / currentBowlerCard.oversBowled) * 6).toFixed(2)
-        } : null,
-
-        // All bowlers who bowled in this inning
-        bowlers: bowlerCards.map(card => ({
-            name: card.player.name,
-            overs: card.oversBowled.toFixed(1),
-            maidens: card.maidens,
-            runs: card.runsConceded,
-            wickets: card.wicketsTaken,
-            economy: ((card.runsConceded / card.oversBowled) * 6).toFixed(2)
-        })),
-
-        // All batsmen who batted in this inning
-        batsmen: batsmenCards.map(card => ({
-            name: card.player.name,
-            runs: card.runs,
-            ballsFaced: card.ballsFaced,
-            fours: card.fours,
-            sixes: card.sixes,
-            strikeRate: ((card.runs / card.ballsFaced) * 100).toFixed(2)
-        }))
+      totalScore,
+      totalWickets,
+      totalOvers: totalOvers.toFixed(1),
+      runRate,
+      striker: strikerData,
+      nonStriker: nonStrikerData,
+      currentBowler: inning.deliveries.length > 0 ? inning.deliveries[inning.deliveries.length - 1].bowler : null,
+      bowlers,
+      deliveries: inning.deliveries.map(delivery => ({
+        batsman: delivery.batsman.name,
+        bowler: delivery.bowler.name,
+        runs: delivery.runs,
+        deliveryType: delivery.deliveryType,
+        isWicket: delivery.isWicket
+      }))
     };
-}
+  } catch (err) {
+    console.error("Error fetching inning details:", err);
+    throw err;
+  }
+};
 
 
