@@ -20,11 +20,9 @@ router.get("/", (async (_req: Request, res: Response) => {
 
     const currentInning = innings[innings.length - 1];
     const firstInning = innings[0];
-
-    // Get full details for current inning
+ 
     const currentInningData = await getInningDetails(currentInning._id.toString());
-
-    // Prepare summary for first inning
+ 
     const overs =
       Math.floor(firstInning.totalBalls / 6) +
       (firstInning.totalBalls % 6) / 10;
@@ -34,8 +32,7 @@ router.get("/", (async (_req: Request, res: Response) => {
       totalWickets: firstInning.totalWickets,
       totalOvers: overs.toFixed(1),
     };
-
-    // Populate teams before accessing them
+ 
     const populatedCurrentInning = await currentInning.populate('battingTeam bowlingTeam') as PopulatedInning;
     const battingTeam = await Team.findById(populatedCurrentInning.battingTeam).populate('players');
     const bowlingTeam = await Team.findById(populatedCurrentInning.bowlingTeam).populate('players');

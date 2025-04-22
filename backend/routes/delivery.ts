@@ -9,21 +9,16 @@ router.post("/", (async (req: Request, res: Response) => {
     const delivery = new Delivery(req.body);
     console.log(delivery);
     await delivery.save();
-
-    // Update inning + player stats
+ 
     await processDelivery(delivery);
-
-    // Get all innings
+ 
     const innings = await Inning.find().sort({ createdAt: 1 });
-
-    // Identify current and first innings
+ 
     const currentInning = innings[innings.length - 1];
     const firstInning = innings[0];
-
-    // Get full details for current inning
+ 
     const currentInningData = await getInningDetails(currentInning._id.toString());
-
-    // Create summary for first inning
+ 
     const overs =
       Math.floor(firstInning.totalBalls / 6) +
       (firstInning.totalBalls % 6) / 10;

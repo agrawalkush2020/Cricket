@@ -122,21 +122,18 @@ export const processDelivery = async (delivery: any) => {
     default:
       throw new Error(`Unknown delivery type: ${deliveryType}`);
   }
-
-  // Add additional extras if any
+ 
   if (extraType) {
     inning.extras[extraType] += extraRuns;
   }
-
-  // Update inning and scorecards
+ 
   inning.totalRuns += teamRuns;
   if (isLegalBall) inning.totalBalls += 1;
 
   bowlerCard.runsConceded += bowlerRuns;
   if (isLegalBall) bowlerCard.oversBowled += 1 / 6;
   if (isWicket) bowlerCard.wicketsTaken += 1;
-
-  // Save all changes
+ 
   await batsmanCard.save();
   await bowlerCard.save();
   await inning.save();
